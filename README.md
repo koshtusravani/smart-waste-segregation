@@ -53,6 +53,8 @@ python setup_combined_dataset.py
 
 This downloads TrashNet, expects RealWaste to be pre-downloaded at data/raw/realwaste-main/, merges both datasets, remaps to 5 classes, and splits into train/val/test.
 
+realwaste dowload link - https://github.com/sam-single/realwaste
+
 ### 3. Balance classes with augmentation
 ```
 python augment_organic.py
