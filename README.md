@@ -1,6 +1,5 @@
 # Smart Waste Segregation Assistant
 A Real-Time Eco-Friendly AI System for Multi-Class Waste Classification
-Final Project — Hema Sravani Koshtu
 
 ## Project Overview
 I built this system to address a problem I noticed — most people do not know how to correctly sort their waste, which leads to recyclable materials ending up in landfills. The Smart Waste Segregation Assistant uses computer vision and deep learning to classify waste in real time through a webcam into five categories: glass, metal, organic, paper, and plastic. Once classified, the system displays the predicted category, confidence level, and a disposal recommendation directly on screen.
