@@ -8,6 +8,7 @@ I built this system to address a problem I noticed — most people do not know h
 The model is built on MobileNetV2, a lightweight CNN pretrained on ImageNet, and fine-tuned on a combined dataset of TrashNet and RealWaste. Training used a two-phase approach — first training only the classification head with the backbone frozen, then unfreezing all layers for full fine-tuning. The final model achieves 90.97% accuracy on the test set across all five classes.
 
 ## Project Structure
+```
 smart_waste_segregation/
 ├── data/
 │   ├── raw/                         #downloaded source datasets
@@ -37,6 +38,7 @@ smart_waste_segregation/
 ├── setup_combined_dataset.py        #download + combine + split dataset
 ├── augment_organic.py               #balance underrepresented classes
 └── requirements.txt
+```
 
 ## Quick Start
 
