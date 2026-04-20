@@ -1,4 +1,3 @@
-# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -10,39 +9,39 @@ dist/
 build/
 .eggs/
 
-# Virtual environments
 venv/
 env/
 .venv/
 .env/
 
-# Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Data — don't push large datasets to GitHub
 data/raw/
 data/processed/
 
-# Models — large checkpoint files
 models/*.pth
 models/*.pt
 
-# Results images (optional: remove these lines if you want to push them)
-# results/
-
-# Screenshots from webcam
 screenshot_*.png
 
-# OS
 .DS_Store
 Thumbs.db
 
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Logs
 *.log
+
+data/processed/train/glass/aug_*
+data/processed/train/metal/aug_*
+data/processed/train/organic/aug_*
+data/processed/train/paper/aug_*
+data/processed/train/plastic/aug_*
+
+data/raw/*.zip
+
+.pytest_cache/
+tests/__pycache__/

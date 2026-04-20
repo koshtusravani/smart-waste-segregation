@@ -1,24 +1,8 @@
-"""
-setup_dataset.py
-----------------
-Downloads TrashNet from Hugging Face, remaps classes to 5 categories
-(as described in the proposal), and splits into train / val / test.
-
-Run once before training:
-    python setup_dataset.py
-
-Class remapping (from proposal):
-    cardboard → paper
-    trash     → organic
-    glass, metal, paper, plastic → unchanged
-"""
-
 import os
 import shutil
 import random
 from pathlib import Path
 
-# Add src to path
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
@@ -31,13 +15,9 @@ from config import (
 random.seed(RANDOM_SEED)
 
 
-# ── Step 1: Download ──────────────────────────────────────────────────────────
 
 def download_trashnet():
-    """
-    Downloads TrashNet directly from GitHub as a zip file.
-    Extracts to data/raw/trashnet_images/
-    """
+    
     import zipfile
     import urllib.request
 
@@ -47,7 +27,6 @@ def download_trashnet():
 
     os.makedirs(DATA_RAW_DIR, exist_ok=True)
 
-    # Download
     if not os.path.exists(zip_path):
         print(f"[Setup] Downloading TrashNet (~44MB)...")
         print(f"        From: {zip_url}")
@@ -63,13 +42,11 @@ def download_trashnet():
     else:
         print(f"[Setup] Zip already exists, skipping download.")
 
-    # Extract
     if not os.path.exists(raw_out):
         print(f"[Setup] Extracting zip...")
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(DATA_RAW_DIR)
 
-        # The zip extracts to a folder called "dataset-resized"
         extracted = os.path.join(DATA_RAW_DIR, "dataset-resized")
         if os.path.exists(extracted):
             os.rename(extracted, raw_out)
@@ -78,7 +55,6 @@ def download_trashnet():
     else:
         print(f"[Setup] Already extracted, skipping.")
 
-    # Show what was extracted
     print("\n[Setup] Found classes:")
     for cls in sorted(os.listdir(raw_out)):
         cls_path = os.path.join(raw_out, cls)
@@ -89,13 +65,7 @@ def download_trashnet():
     return raw_out
 
 
-# ── Step 2: Remap classes ─────────────────────────────────────────────────────
-
 def remap_classes(raw_dir):
-    """
-    Collect all images from raw_dir and map them into our 5-class system.
-    Returns: dict { class_name: [list of file paths] }
-    """
     print("[Setup] Remapping classes to 5-class system...")
     class_images = {cls: [] for cls in CLASS_NAMES}
 
@@ -115,11 +85,7 @@ def remap_classes(raw_dir):
 
     return class_images
 
-
-# ── Step 3: Split & copy ──────────────────────────────────────────────────────
-
 def split_and_copy(class_images):
-    """Split each class into train/val/test and copy to processed directories."""
     print(f"\n[Setup] Splitting: {TRAIN_SPLIT:.0%} train | "
           f"{VAL_SPLIT:.0%} val | {TEST_SPLIT:.0%} test")
 
@@ -143,7 +109,7 @@ def split_and_copy(class_images):
             os.makedirs(cls_out, exist_ok=True)
             for img_path in split_images:
                 dest = os.path.join(cls_out, os.path.basename(img_path))
-                # avoid duplicate filenames across merged classes
+                
                 if os.path.exists(dest):
                     base, ext = os.path.splitext(os.path.basename(img_path))
                     dest = os.path.join(cls_out, f"{base}_{random.randint(0,9999)}{ext}")
@@ -157,13 +123,10 @@ def split_and_copy(class_images):
         print(f"   {cls:12s}: train={split_dir_counts['train']} | "
               f"val={split_dir_counts['val']} | test={split_dir_counts['test']}")
 
-    print("\n[Setup] ✅ Dataset ready in data/processed/")
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
+    print("\n[Setup]  Dataset ready in data/processed/")
 
 def main():
-    # Check if already done
+    
     if os.path.exists(DATA_TRAIN_DIR) and os.listdir(DATA_TRAIN_DIR):
         print("[Setup] Processed data already exists. Delete data/processed/ to re-run.")
         return

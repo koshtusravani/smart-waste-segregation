@@ -1,17 +1,3 @@
-"""
-realtime.py
------------
-Real-time waste classification via webcam using OpenCV.
-
-Implements ALL UI features from the proposal:
-  ✅ Real-time prediction with category name
-  ✅ Confidence level displayed as percentage
-  ✅ Disposal recommendation (e.g. "Dispose in Glass Bin")
-  ✅ Color feedback: GREEN = high confidence, RED = low confidence
-  ✅ Warning message when confidence < 50%
-  ✅ Optional voice output via pyttsx3
-"""
-
 import os
 import sys
 import time
@@ -31,7 +17,6 @@ from config import (
 )
 from model import load_model
 
-# ── Voice setup (optional) ────────────────────────────────────────────────────
 voice_engine = None
 if ENABLE_VOICE:
     try:
@@ -42,8 +27,6 @@ if ENABLE_VOICE:
     except ImportError:
         print("[Voice] pyttsx3 not installed. Voice disabled.")
 
-
-# ── Transform for single webcam frame ────────────────────────────────────────
 inference_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -52,15 +35,13 @@ inference_transform = transforms.Compose([
 
 
 def preprocess_frame(frame_bgr):
-    """Convert a BGR OpenCV frame to a model-ready tensor."""
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
     pil_img   = Image.fromarray(frame_rgb)
-    tensor    = inference_transform(pil_img).unsqueeze(0)  # add batch dim
+    tensor    = inference_transform(pil_img).unsqueeze(0)  
     return tensor
 
 
 def predict(model, tensor, device):
-    """Run one forward pass. Returns (class_name, confidence_float)."""
     tensor = tensor.to(device)
     with torch.no_grad():
         outputs = model(tensor)
@@ -72,31 +53,21 @@ def predict(model, tensor, device):
 
 
 def speak(text):
-    """Speak text via pyttsx3 if voice is enabled."""
     if voice_engine:
         voice_engine.say(text)
         voice_engine.runAndWait()
 
 
 def draw_overlay(frame, class_name, confidence, recommendation, is_warning):
-    """
-    Draw a clean semi-transparent overlay panel on the frame with:
-      - Predicted class
-      - Confidence bar
-      - Disposal recommendation
-      - Warning (if confidence < threshold)
-    """
     h, w = frame.shape[:2]
 
-    # ── Color choice based on confidence ─────────────────────────────────────
     if is_warning:
         text_color = WARNING_COLOR
-        status_text = "⚠  LOW CONFIDENCE — UNSURE"
+        status_text = "  LOW CONFIDENCE — UNSURE"
     else:
         text_color = HIGH_CONF_COLOR
-        status_text = "✓  HIGH CONFIDENCE"
+        status_text = "  HIGH CONFIDENCE"
 
-    # ── Semi-transparent background panel ────────────────────────────────────
     overlay = frame.copy()
     panel_x1, panel_y1 = 10, 10
     panel_x2, panel_y2 = w - 10, 185
@@ -104,17 +75,14 @@ def draw_overlay(frame, class_name, confidence, recommendation, is_warning):
                   (30, 30, 30), -1)
     cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
 
-    # ── Title ─────────────────────────────────────────────────────────────────
     cv2.putText(frame, "SMART WASTE SEGREGATION",
                 (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65,
                 (200, 200, 200), 1, cv2.LINE_AA)
 
-    # ── Predicted class ───────────────────────────────────────────────────────
     cv2.putText(frame, f"Class: {class_name.upper()}",
                 (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 1.0,
                 text_color, 2, cv2.LINE_AA)
 
-    # ── Confidence bar ────────────────────────────────────────────────────────
     bar_x, bar_y, bar_h = 20, 95, 18
     bar_max_w = w - 40
     bar_fill  = int(bar_max_w * confidence)
@@ -127,17 +95,14 @@ def draw_overlay(frame, class_name, confidence, recommendation, is_warning):
                 (bar_x + bar_max_w + 5, bar_y + 14),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1, cv2.LINE_AA)
 
-    # ── Disposal recommendation ───────────────────────────────────────────────
     cv2.putText(frame, recommendation,
                 (20, 135), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
                 (220, 220, 100), 1, cv2.LINE_AA)
 
-    # ── Status / warning ─────────────────────────────────────────────────────
     cv2.putText(frame, status_text,
                 (20, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.55,
                 text_color, 1, cv2.LINE_AA)
 
-    # ── Bottom hint ───────────────────────────────────────────────────────────
     cv2.putText(frame, "Press 'q' to quit | 's' to save screenshot",
                 (10, h - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45,
                 (150, 150, 150), 1, cv2.LINE_AA)
@@ -146,11 +111,9 @@ def draw_overlay(frame, class_name, confidence, recommendation, is_warning):
 
 
 def run_realtime():
-    """Main loop: open webcam and classify waste in real time."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[RealTime] Using device: {device}")
 
-    # Load model
     if not os.path.exists(BEST_MODEL_PATH):
         print(f"[RealTime] ERROR: No model at {BEST_MODEL_PATH}")
         print("  → Run python src/train.py first.")
@@ -160,7 +123,6 @@ def run_realtime():
     model = load_model(BEST_MODEL_PATH, num_classes=NUM_CLASSES, device=device)
     print("[RealTime] Model ready.")
 
-    # Open webcam
     cap = cv2.VideoCapture(CAMERA_INDEX)
     if not cap.isOpened():
         print(f"[RealTime] ERROR: Cannot open webcam (index {CAMERA_INDEX})")
@@ -171,7 +133,7 @@ def run_realtime():
 
     last_prediction = ""
     last_speak_time = 0
-    speak_interval  = 3.0   # speak at most once every 3 seconds
+    speak_interval  = 3.0  
 
     while True:
         ret, frame = cap.read()
@@ -179,13 +141,11 @@ def run_realtime():
             print("[RealTime] Failed to read frame. Exiting.")
             break
 
-        # ── Predict ──────────────────────────────────────────────────────────
         tensor     = preprocess_frame(frame)
         class_name, confidence = predict(model, tensor, device)
         is_warning = confidence < CONFIDENCE_THRESHOLD
         recommendation = DISPOSAL_RECOMMENDATIONS.get(class_name, "Unknown bin")
 
-        # ── Voice (throttled) ─────────────────────────────────────────────────
         now = time.time()
         if (ENABLE_VOICE
                 and not is_warning
@@ -195,13 +155,11 @@ def run_realtime():
             last_prediction = class_name
             last_speak_time = now
 
-        # ── Draw UI ───────────────────────────────────────────────────────────
         frame = draw_overlay(frame, class_name, confidence,
                              recommendation, is_warning)
 
         cv2.imshow("Smart Waste Segregation Assistant", frame)
 
-        # ── Key events ───────────────────────────────────────────────────────
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             print("[RealTime] Quit key pressed. Exiting.")

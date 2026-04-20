@@ -1,102 +1,117 @@
-# ♻️ Smart Waste Segregation Assistant
-
+# Smart Waste Segregation Assistant
 A Real-Time Eco-Friendly AI System for Multi-Class Waste Classification
-> PRCV Final Project — Hema Sravani Koshtu
+Final Project — Hema Sravani Koshtu
 
----
+## Project Overview
+I built this system to address a problem I noticed — most people do not know how to correctly sort their waste, which leads to recyclable materials ending up in landfills. The Smart Waste Segregation Assistant uses computer vision and deep learning to classify waste in real time through a webcam into five categories: glass, metal, organic, paper, and plastic. Once classified, the system displays the predicted category, confidence level, and a disposal recommendation directly on screen.
 
-## 📌 Project Overview
+The model is built on MobileNetV2, a lightweight CNN pretrained on ImageNet, and fine-tuned on a combined dataset of TrashNet and RealWaste. Training used a two-phase approach — first training only the classification head with the backbone frozen, then unfreezing all layers for full fine-tuning. The final model achieves 90.97% accuracy on the test set across all five classes.
 
-This system uses computer vision + deep learning to classify waste in real-time via webcam into 5 categories:
-
-| Class | Examples |
-|-------|----------|
-| 🧴 Plastic | Bottles, bags, containers |
-| 📄 Paper | Cardboard, newspapers, boxes |
-| 🥫 Metal | Cans, foil, tins |
-| 🍌 Organic | Food scraps, leaves, general waste |
-| 🪟 Glass | Bottles, jars, broken glass |
-
-Real-time predictions include category, confidence level, and disposal recommendation.
-
----
-
-## 🗂️ Project Structure
-
+## Project Structure
 smart_waste_segregation/
 ├── data/
-│   ├── raw/                    # Original dataset (TrashNet or custom)
+│   ├── raw/                         #downloaded source datasets
 │   └── processed/
-│       ├── train/              # 70% split
-│       ├── val/                # 15% split
-│       └── test/               # 15% split
+│       ├── train/                   #70% split
+│       ├── val/                     #15% split
+│       └── test/                    #15% split
 ├── src/
-│   ├── config.py               # All hyperparameters and paths
-│   ├── dataset.py              # Dataset loading and augmentation
-│   ├── model.py                # CNN architecture
-│   ├── train.py                # Training loop
-│   ├── evaluate.py             # Metrics: accuracy, precision, recall, F1
-│   └── realtime.py             # Webcam real-time inference
-├── models/                     # Saved .pth model checkpoints
-├── notebooks/
-│   └── exploration.ipynb       # EDA and training experiments
+│   ├── config.py                    #all hyperparameters and paths
+│   ├── dataset.py                   #dataset loading and transforms
+│   ├── model.py                     #mobileNetV2 architecture
+│   ├── train.py                     #5-class training script
+│   ├── train_4class.py              #4-class training (glass excluded)
+│   ├── evaluate.py                  #5-class evaluation
+│   ├── evaluate_4class.py           #4-class evaluation
+│   ├── compare_models.py            #4-class vs 5-class comparison
+│   └── realtime.py                  #webcam real-time inference
+├── models/                          #saved .pth checkpoints
 ├── results/
-│   ├── plots/                  # Training/validation loss & accuracy curves
-│   └── confusion_matrix/       # Confusion matrix images
+│   ├── plots/                       #loss and accuracy curves (5-class)
+│   ├── plots_4class/                #loss and accuracy curves (4-class)
+│   ├── confusion_matrix/            #confusion matrix (5-class)
+│   ├── confusion_matrix_4class/     #confusion matrix (4-class)
+│   └── comparison/                  #F1 bar chart comparing both models
 ├── tests/
-│   └── test_model.py           # Unit tests
-├── requirements.txt
-├── setup_dataset.py            # Download + split dataset automatically
-└── README.md
+│   └── test_model.py                #unit tests
+├── setup_combined_dataset.py        #download + combine + split dataset
+├── augment_organic.py               #balance underrepresented classes
+└── requirements.txt
 
+## Quick Start
 
----
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
+### 1. Install dependencies
 pip install -r requirements.txt
 
-### 2. Download & Prepare Dataset
-python setup_dataset.py
-> This downloads TrashNet, remaps to 5 classes, and splits into train/val/test.
+### 2. Prepare the dataset
+python setup_combined_dataset.py
 
-### 3. Train the Model
+This downloads TrashNet, expects RealWaste to be pre-downloaded at data/raw/realwaste-main/, merges both datasets, remaps to 5 classes, and splits into train/val/test.
+
+### 3. Balance classes with augmentation
+python augment_organic.py
+
+Generates augmented images for underrepresented classes (glass, organic) to bring them up to 900 images each.
+
+### 4. Train the 5-class model
 python src/train.py
 
-### 4. Evaluate
+### 5. Evaluate the 5-class model
 python src/evaluate.py
 
-### 5. Run Real-Time Webcam Demo
+### 6. Train and evaluate the 4-class model (optional comparison)
+python src/train_4class.py
+python src/evaluate_4class.py
+python src/compare_models.py
+
+### 7. Run the real-time webcam demo
 python src/realtime.py
 
----
+Press s to save a screenshot. Press q to quit.
 
-## 📊 Evaluation Metrics
-- Accuracy, Precision, Recall, F1-Score (per class + macro avg)
-- Confusion Matrix (especially glass/plastic and paper/organic)
-- Real-time webcam performance on unseen objects
+## Results
 
----
+### 5-Class Model
 
-## 🔧 Tech Stack
+| Class | Precision | Recall | F1 |
+|-------|-----------|--------|----|
+| glass | 0.9328 | 0.8993 | 0.9158 |
+| metal | 0.7991 | 0.9722 | 0.8772 |
+| organic | 0.9048 | 0.9157 | 0.9102 |
+| paper | 0.9658 | 0.9559 | 0.9608 |
+| plastic | 0.9385 | 0.7962 | 0.8615 |
+| macro avg | 0.9082 | 0.9079 | 0.9051 |
+
+Overall Test Accuracy: 90.97%
+
+### 4-Class vs 5-Class Comparison
+
+| Class | 4-Class F1 | 5-Class F1 | Change |
+|-------|-----------|-----------|--------|
+| metal | 0.9081 | 0.8772 | +0.031 |
+| organic | 0.9333 | 0.9102 | +0.023 |
+| paper | 0.9641 | 0.9608 | ~same |
+| plastic | 0.8894 | 0.8615 | +0.028 |
+
+The 4-class model (glass excluded) achieves 92.72% accuracy compared to 90.97% for the 5-class model. The improvement in plastic and organic F1 when glass is removed confirms the visual similarity between glass and plastic noted in the proposal. Despite this, the 5-class model is the correct design choice since it provides specific disposal guidance for glass, which the 4-class model cannot do.
+
+## Dataset
+The system was trained on a combination of two datasets:
+
+- TrashNet — 2,527 images across 6 classes, remapped to 5 (cardboard to paper, trash to organic)
+- RealWaste — real-world waste images, selected classes mapped to the same 5-category system
+
+Final training set: 4,992 images across 5 classes after augmentation.
+
+## Tech Stack
 - Python 3.10+
-- PyTorch — CNN model training
-- OpenCV — webcam capture and real-time display
-- torchvision — image transforms and augmentations
+- PyTorch — model training and inference
+- torchvision — MobileNetV2, image transforms
+- OpenCV — webcam capture and real-time overlay
 - scikit-learn — evaluation metrics
-- matplotlib / seaborn — plots
+- matplotlib / seaborn — plots and confusion matrices
+- Pillow — image augmentation
 
----
-
-## 📁 Dataset
-
-Recommended: TrashNet
-- Download: https://huggingface.co/datasets/garythung/trashnet
-- 6 original classes → remapped to 5 (cardboard → paper, trash → organic)
-- ~2,500 images total
-
----
-
-## 👩‍💻 Author
+## Author
 Hema Sravani Koshtu
+Final Project — Individual Submission
