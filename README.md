@@ -7,37 +7,38 @@ I built this system to address a problem I noticed — most people do not know h
 The model is built on MobileNetV2, a lightweight CNN pretrained on ImageNet, and fine-tuned on a combined dataset of TrashNet and RealWaste. Training used a two-phase approach — first training only the classification head with the backbone frozen, then unfreezing all layers for full fine-tuning. The final model achieves 90.97% accuracy on the test set across all five classes.
 
 ## Project Structure
-```
 smart_waste_segregation/
 ├── data/
-│   ├── raw/                         #downloaded source datasets
+│   ├── raw/                         #downloaded source datasets (gitignored)
 │   └── processed/
-│       ├── train/                   #70% split
-│       ├── val/                     #15% split
-│       └── test/                    #15% split
-├── src/
-│   ├── config.py                    #all hyperparameters and paths
-│   ├── dataset.py                   #dataset loading and transforms
-│   ├── model.py                     #mobileNetV2 architecture
-│   ├── train.py                     #5-class training script
-│   ├── train_4class.py              #4-class training (glass excluded)
-│   ├── evaluate.py                  #5-class evaluation
-│   ├── evaluate_4class.py           #4-class evaluation
-│   ├── compare_models.py            #4-class vs 5-class comparison
-│   └── realtime.py                  #webcam real-time inference
-├── models/                          #saved .pth checkpoints
+│       ├── train/                   #70% split (gitignored)
+│       ├── val/                     #15% split (gitignored)
+│       └── test/                    #15% split (gitignored)
+├── models/                          #saved .pth checkpoints (gitignored)
 ├── results/
 │   ├── plots/                       #loss and accuracy curves (5-class)
 │   ├── plots_4class/                #loss and accuracy curves (4-class)
 │   ├── confusion_matrix/            #confusion matrix (5-class)
 │   ├── confusion_matrix_4class/     #confusion matrix (4-class)
 │   └── comparison/                  #F1 bar chart comparing both models
+├── src/
+│   ├── augment_organic.py           #balance underrepresented classes on disk
+│   ├── compare_models.py            #4-class vs 5-class side-by-side comparison
+│   ├── config.py                    #all hyperparameters and paths
+│   ├── dataset.py                   #dataset loading and transforms
+│   ├── evaluate_4class.py           #4-class model evaluation
+│   ├── evaluate.py                  #5-class model evaluation
+│   ├── model.py                     #mobileNetV2 architecture
+│   ├── realtime.py                  #webcam real-time inference
+│   ├── setup_combined_dataset.py    #download + combine + split dataset
+│   ├── train_4class.py              #4-class training (glass excluded)
+│   └── train.py                     #5-class training script
 ├── tests/
-│   └── test_model.py                #unit tests
-├── setup_combined_dataset.py        #download + combine + split dataset
-├── augment_organic.py               #balance underrepresented classes
-└── requirements.txt
-```
+│   └── test_model.py                #unit tests (pytest)
+├── .gitignore
+├── README.md
+├── requirements.txt
+└── setup_dataset.py                 #TrashNet-only
 
 ## Quick Start
 
