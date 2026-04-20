@@ -43,31 +43,45 @@ smart_waste_segregation/
 ## Quick Start
 
 ### 1. Install dependencies
+```
 pip install -r requirements.txt
+```
 
 ### 2. Prepare the dataset
+```
 python setup_combined_dataset.py
+```
 
 This downloads TrashNet, expects RealWaste to be pre-downloaded at data/raw/realwaste-main/, merges both datasets, remaps to 5 classes, and splits into train/val/test.
 
 ### 3. Balance classes with augmentation
+```
 python augment_organic.py
+```
 
 Generates augmented images for underrepresented classes (glass, organic) to bring them up to 900 images each.
 
 ### 4. Train the 5-class model
+```
 python src/train.py
+```
 
 ### 5. Evaluate the 5-class model
+```
 python src/evaluate.py
+```
 
 ### 6. Train and evaluate the 4-class model (optional comparison)
+```
 python src/train_4class.py
 python src/evaluate_4class.py
 python src/compare_models.py
+```
 
 ### 7. Run the real-time webcam demo
+```
 python src/realtime.py
+```
 
 Press s to save a screenshot. Press q to quit.
 
@@ -116,4 +130,3 @@ Final training set: 4,992 images across 5 classes after augmentation.
 
 ## Author
 Hema Sravani Koshtu
-Final Project — Individual Submission
