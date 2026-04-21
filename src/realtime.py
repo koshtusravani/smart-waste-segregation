@@ -1,3 +1,8 @@
+# realtime.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: real-time waste classification via webcam using the trained model and opencv
+
 import os
 import sys
 import time
@@ -17,6 +22,7 @@ from config import (
 )
 from model import load_model
 
+#initialize voice engine if enabled in config
 voice_engine = None
 if ENABLE_VOICE:
     try:
@@ -27,6 +33,7 @@ if ENABLE_VOICE:
     except ImportError:
         print("[Voice] pyttsx3 not installed. Voice disabled.")
 
+#inference transform applied to each webcam frame before model input
 inference_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
@@ -35,13 +42,15 @@ inference_transform = transforms.Compose([
 
 
 def preprocess_frame(frame_bgr):
+    #converts bgr opencv frame to a normalized tensor for model inference
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
     pil_img   = Image.fromarray(frame_rgb)
-    tensor    = inference_transform(pil_img).unsqueeze(0)  
+    tensor    = inference_transform(pil_img).unsqueeze(0)
     return tensor
 
 
 def predict(model, tensor, device):
+    #returns predicted class name and softmax confidence for a single frame
     tensor = tensor.to(device)
     with torch.no_grad():
         outputs = model(tensor)
@@ -59,6 +68,7 @@ def speak(text):
 
 
 def draw_overlay(frame, class_name, confidence, recommendation, is_warning):
+    #draws the prediction panel, confidence bar, and disposal recommendation on the frame
     h, w = frame.shape[:2]
 
     if is_warning:
@@ -114,6 +124,7 @@ def run_realtime():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[RealTime] Using device: {device}")
 
+    #check model checkpoint exists before starting the webcam
     if not os.path.exists(BEST_MODEL_PATH):
         print(f"[RealTime] ERROR: No model at {BEST_MODEL_PATH}")
         print("  → Run python src/train.py first.")
@@ -133,7 +144,7 @@ def run_realtime():
 
     last_prediction = ""
     last_speak_time = 0
-    speak_interval  = 3.0  
+    speak_interval  = 3.0  #minimum seconds between voice announcements
 
     while True:
         ret, frame = cap.read()
@@ -146,6 +157,7 @@ def run_realtime():
         is_warning = confidence < CONFIDENCE_THRESHOLD
         recommendation = DISPOSAL_RECOMMENDATIONS.get(class_name, "Unknown bin")
 
+        #speak only when prediction changes and confidence is high enough
         now = time.time()
         if (ENABLE_VOICE
                 and not is_warning

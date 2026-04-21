@@ -1,3 +1,8 @@
+# train_4class.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: trains a 4-class model with glass excluded for comparison against the 5-class model
+
 import os
 import sys
 import time
@@ -22,23 +27,26 @@ from model import build_model, count_parameters
 FOUR_CLASS_MODEL_PATH = os.path.join(MODEL_DIR, "best_model_4class.pth")
 FOUR_CLASS_PLOTS_DIR  = os.path.join(RESULTS_DIR, "plots_4class")
 
+#glass is excluded — remaining 4 classes in sorted order
 FOUR_CLASS_NAMES = ["metal", "organic", "paper", "plastic"]
 
-def get_four_class_dataloaders(batch_size=32, num_workers=0):
 
+def get_four_class_dataloaders(batch_size=32, num_workers=0):
+    #loads train/val/test datasets with glass samples filtered out and labels remapped to 0-3
     train_full = datasets.ImageFolder(root=DATA_TRAIN_DIR, transform=get_train_transforms())
     val_full   = datasets.ImageFolder(root=DATA_VAL_DIR,   transform=get_val_test_transforms())
     test_full  = datasets.ImageFolder(root=DATA_TEST_DIR,  transform=get_val_test_transforms())
 
-    glass_idx  = train_full.class_to_idx["glass"]
-    old_classes = train_full.classes                          
-    new_classes = [c for c in old_classes if c != "glass"]   
+    glass_idx   = train_full.class_to_idx["glass"]
+    old_classes = train_full.classes
+    new_classes = [c for c in old_classes if c != "glass"]
     old_to_new  = {old_classes.index(c): new_classes.index(c) for c in new_classes}
 
     def filter_indices(dataset):
         return [i for i, (_, lbl) in enumerate(dataset.samples) if lbl != glass_idx]
 
     def collate_remap(batch):
+        #remaps original 5-class labels to 4-class labels during batch loading
         imgs, labels = zip(*batch)
         new_labels = torch.tensor([old_to_new[int(l)] for l in labels])
         return torch.stack(imgs), new_labels
@@ -63,6 +71,7 @@ def get_four_class_dataloaders(batch_size=32, num_workers=0):
     print(f"[4-Class] Train: {n_train} | Val: {n_val} | Test: {n_test}")
     print(f"[4-Class] Classes: {new_classes}")
     return train_loader, val_loader, test_loader, new_classes
+
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
@@ -97,6 +106,7 @@ def validate(model, loader, criterion, device):
 
 
 def save_curves(history, save_dir):
+    #saves loss and accuracy training curves to the plots directory
     os.makedirs(save_dir, exist_ok=True)
     epochs = range(1, len(history["train_loss"]) + 1)
 
@@ -125,6 +135,7 @@ def _print_header():
     print(f"{'Epoch':>6} | {'Train Loss':>10} | {'Train Acc':>9} | {'Val Loss':>8} | {'Val Acc':>8} | {'Time':>6}")
     print("-" * 65)
 
+
 def train_4class():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[Train] Using device: {device}")
@@ -144,6 +155,7 @@ def train_4class():
     best_val_acc = 0.0
     os.makedirs(MODEL_DIR, exist_ok=True)
 
+    #phase 1: train classification head only with backbone frozen
     print("\n[Train] Phase 1: Head only (30 epochs, backbone frozen)\n")
     _print_header()
 
@@ -168,6 +180,7 @@ def train_4class():
             torch.save(model.state_dict(), FOUR_CLASS_MODEL_PATH)
             print(f"            Best model saved (val acc: {best_val_acc*100:.2f}%)")
 
+    #phase 2: unfreeze all layers and fine-tune the full network
     print("\n[Train] Phase 2: Full fine-tune (15 epochs, lr=1e-4)\n")
     _print_header()
 

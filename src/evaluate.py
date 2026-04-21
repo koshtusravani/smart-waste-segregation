@@ -1,3 +1,8 @@
+# evaluate.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: evaluates the 5-class model on the test set and saves confusion matrix and metrics
+
 import os
 import sys
 import torch
@@ -17,7 +22,9 @@ from config import (
 from dataset import get_dataloaders
 from model import load_model
 
+
 def get_predictions(model, loader, device):
+    #runs inference on the test set and returns labels, predictions, and softmax probabilities
     model.eval()
     all_labels, all_preds, all_probs = [], [], []
 
@@ -36,6 +43,7 @@ def get_predictions(model, loader, device):
 
 
 def print_metrics(y_true, y_pred, class_names):
+    #prints overall accuracy and per-class precision, recall, and f1
     acc = accuracy_score(y_true, y_pred)
     print(f"  Overall Accuracy: {acc*100:.2f}%")
     print("\nPer-Class Report:")
@@ -43,10 +51,11 @@ def print_metrics(y_true, y_pred, class_names):
 
 
 def save_confusion_matrix(y_true, y_pred, class_names, save_dir):
+    #saves both raw count and normalized confusion matrix as a single image
     os.makedirs(save_dir, exist_ok=True)
 
     cm = confusion_matrix(y_true, y_pred)
-    cm_norm = cm.astype("float") / cm.sum(axis=1, keepdims=True)  
+    cm_norm = cm.astype("float") / cm.sum(axis=1, keepdims=True)
 
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
@@ -75,6 +84,7 @@ def evaluate():
 
     _, _, test_loader, class_names = get_dataloaders(num_workers=0)
 
+    #check that the model checkpoint exists before proceeding
     if not os.path.exists(BEST_MODEL_PATH):
         print(f"[Evaluate] ERROR: No model found at {BEST_MODEL_PATH}")
         print("  → Run python src/train.py first.")
@@ -86,7 +96,6 @@ def evaluate():
     y_true, y_pred, y_probs = get_predictions(model, test_loader, device)
 
     print_metrics(y_true, y_pred, class_names)
-
     save_confusion_matrix(y_true, y_pred, class_names, CM_DIR)
 
     print("\n[Evaluate]  Evaluation complete.")

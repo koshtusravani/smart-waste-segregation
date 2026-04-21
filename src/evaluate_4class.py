@@ -1,3 +1,8 @@
+# evaluate_4class.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: evaluates the 4-class model on the test set and saves the confusion matrix
+
 import os
 import sys
 import torch
@@ -15,7 +20,9 @@ from train_4class import get_four_class_dataloaders
 FOUR_CLASS_MODEL_PATH = os.path.join(MODEL_DIR, "best_model_4class.pth")
 FOUR_CLASS_CM_DIR     = os.path.join(RESULTS_DIR, "confusion_matrix_4class")
 
+
 def get_predictions(model, loader, device):
+    #runs inference on the test set and returns true labels and predictions
     model.eval()
     all_labels, all_preds = [], []
     with torch.no_grad():
@@ -27,7 +34,9 @@ def get_predictions(model, loader, device):
             all_preds.extend(preds.cpu().numpy())
     return np.array(all_labels), np.array(all_preds)
 
+
 def save_confusion_matrix(y_true, y_pred, class_names, save_dir):
+    #saves both raw count and normalized confusion matrix as a single image
     os.makedirs(save_dir, exist_ok=True)
     cm      = confusion_matrix(y_true, y_pred)
     cm_norm = cm.astype("float") / cm.sum(axis=1, keepdims=True)
@@ -52,10 +61,12 @@ def save_confusion_matrix(y_true, y_pred, class_names, save_dir):
     plt.close()
     print(f"[Evaluate] Confusion matrix saved to {path}")
 
+
 def evaluate_4class():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[Evaluate] Using device: {device}")
 
+    #check that the 4-class model checkpoint exists before proceeding
     if not os.path.exists(FOUR_CLASS_MODEL_PATH):
         print(f"[Evaluate] ERROR: No model found at {FOUR_CLASS_MODEL_PATH}")
         print("  → Run: python src/train_4class.py first.")

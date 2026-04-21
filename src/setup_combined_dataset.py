@@ -1,3 +1,8 @@
+# setup_combined_dataset.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: downloads trashnet, combines with realwaste, remaps to 5 classes, and splits into train/val/test
+
 import os, sys, shutil, random, zipfile
 import urllib.request
 
@@ -9,6 +14,7 @@ from config import (
 
 random.seed(RANDOM_SEED)
 
+#trashnet's 6 classes remapped to the 5-class system
 TRASHNET_REMAP = {
     "cardboard": "paper",
     "glass":     "glass",
@@ -18,16 +24,17 @@ TRASHNET_REMAP = {
     "trash":     "organic",
 }
 
+#realwaste classes remapped to the 5-class system, none means the class is excluded
 REALWASTE_REMAP = {
-    "Cardboard":          "paper",
-    "Food Organics":      "organic",
-    "Glass":              "glass",
-    "Metal":              "metal",
-    "Paper":              "paper",
-    "Plastic":            "plastic",
-    "Miscellaneous Trash": None,   
-    "Textile Trash":       None,   
-    "Vegetation":          None,   
+    "Cardboard":           "paper",
+    "Food Organics":       "organic",
+    "Glass":               "glass",
+    "Metal":               "metal",
+    "Paper":               "paper",
+    "Plastic":             "plastic",
+    "Miscellaneous Trash": None,
+    "Textile Trash":       None,
+    "Vegetation":          None,
 }
 
 
@@ -39,6 +46,7 @@ def progress_bar(block_num, block_size, total_size):
 
 
 def download_trashnet():
+    #downloads and extracts trashnet if not already present
     zip_url  = "https://github.com/garythung/trashnet/raw/master/data/dataset-resized.zip"
     zip_path = os.path.join(DATA_RAW_DIR, "trashnet.zip")
     out_dir  = os.path.join(DATA_RAW_DIR, "trashnet_images")
@@ -60,13 +68,16 @@ def download_trashnet():
     print(f"[Setup] TrashNet ready at {out_dir}")
     return out_dir
 
+
 def download_realwaste():
+    #realwaste must be manually downloaded and placed at data/raw/realwaste-main/
     out_dir = os.path.join(DATA_RAW_DIR, "realwaste-main", "RealWaste")
     print(f"[Setup] RealWaste found at {out_dir}")
     return out_dir
 
 
 def collect_images(raw_dir, remap):
+    #collects image paths from a raw directory using the given class remap
     class_images = {cls: [] for cls in CLASS_NAMES}
     for original, target in remap.items():
         if target is None:
@@ -86,11 +97,13 @@ def collect_images(raw_dir, remap):
 
 
 def merge(a, b):
+    #merges image lists from two datasets into a single dict
     merged = {cls: a.get(cls, []) + b.get(cls, []) for cls in CLASS_NAMES}
     return merged
 
 
 def split_and_copy(class_images):
+    #shuffles and splits each class into train/val/test and copies files to processed directories
     print(f"\n[Setup] Final class sizes:")
     for cls, imgs in class_images.items():
         print(f"   {cls:12s}: {len(imgs)} images")
@@ -123,6 +136,7 @@ def split_and_copy(class_images):
 
 
 def main():
+    #skip if processed data already exists
     if os.path.exists(DATA_TRAIN_DIR) and os.listdir(DATA_TRAIN_DIR):
         print("[Setup] data/processed/ already exists.")
         print("        Delete it to rebuild: rmdir /s /q data\\processed")

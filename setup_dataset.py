@@ -1,3 +1,8 @@
+# setup_dataset.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: downloads trashnet only, remaps to 5 classes, and splits into train/val/test (legacy script)
+
 import os
 import shutil
 import random
@@ -15,9 +20,8 @@ from config import (
 random.seed(RANDOM_SEED)
 
 
-
 def download_trashnet():
-    
+    #downloads and extracts trashnet if not already present
     import zipfile
     import urllib.request
 
@@ -66,6 +70,7 @@ def download_trashnet():
 
 
 def remap_classes(raw_dir):
+    #remaps trashnet's 6 original classes to the 5-class system
     print("[Setup] Remapping classes to 5-class system...")
     class_images = {cls: [] for cls in CLASS_NAMES}
 
@@ -85,7 +90,9 @@ def remap_classes(raw_dir):
 
     return class_images
 
+
 def split_and_copy(class_images):
+    #shuffles and splits each class into train/val/test and copies files to processed directories
     print(f"\n[Setup] Splitting: {TRAIN_SPLIT:.0%} train | "
           f"{VAL_SPLIT:.0%} val | {TEST_SPLIT:.0%} test")
 
@@ -109,7 +116,7 @@ def split_and_copy(class_images):
             os.makedirs(cls_out, exist_ok=True)
             for img_path in split_images:
                 dest = os.path.join(cls_out, os.path.basename(img_path))
-                
+                #append random suffix to avoid overwriting duplicate filenames
                 if os.path.exists(dest):
                     base, ext = os.path.splitext(os.path.basename(img_path))
                     dest = os.path.join(cls_out, f"{base}_{random.randint(0,9999)}{ext}")
@@ -125,8 +132,9 @@ def split_and_copy(class_images):
 
     print("\n[Setup]  Dataset ready in data/processed/")
 
+
 def main():
-    
+    #skip if processed data already exists
     if os.path.exists(DATA_TRAIN_DIR) and os.listdir(DATA_TRAIN_DIR):
         print("[Setup] Processed data already exists. Delete data/processed/ to re-run.")
         return

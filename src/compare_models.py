@@ -1,3 +1,8 @@
+# compare_models.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: loads both trained models and produces a side-by-side comparison of 4-class vs 5-class results
+
 import os
 import sys
 import torch
@@ -16,7 +21,9 @@ FIVE_CLASS_MODEL_PATH = os.path.join(MODEL_DIR, "best_model.pth")
 FOUR_CLASS_MODEL_PATH = os.path.join(MODEL_DIR, "best_model_4class.pth")
 COMPARISON_SAVE_DIR   = os.path.join(RESULTS_DIR, "comparison")
 
+
 def get_predictions(model, loader, device):
+    #runs inference on the test set and returns true labels and predictions
     model.eval()
     all_labels, all_preds = [], []
     with torch.no_grad():
@@ -28,7 +35,9 @@ def get_predictions(model, loader, device):
             all_preds.extend(preds.cpu().numpy())
     return np.array(all_labels), np.array(all_preds)
 
+
 def save_comparison_chart(results_4, results_5, shared_classes, save_dir):
+    #saves a grouped bar chart comparing per-class f1 scores for both models
     os.makedirs(save_dir, exist_ok=True)
 
     f1_4 = [results_4[c]["f1-score"] for c in shared_classes]
@@ -57,10 +66,10 @@ def save_comparison_chart(results_4, results_5, shared_classes, save_dir):
     plt.close()
     print(f"[Compare] Bar chart saved to {path}")
 
+
 def print_comparison_table(acc_4, acc_5, report_4, report_5, shared_classes):
-    
+    #prints a formatted side-by-side comparison table to the console
     print("        4-CLASS vs 5-CLASS MODEL — FULL COMPARISON")
-    
     print(f"  {'Metric':<32} {'4-Class':>12} {'5-Class':>12}  {'Δ':>6}")
 
     diff_acc = acc_4 - acc_5
@@ -75,16 +84,19 @@ def print_comparison_table(acc_4, acc_5, report_4, report_5, shared_classes):
         f4 = report_4[cls]["f1-score"]
         f5 = report_5[cls]["f1-score"]
         diff = f4 - f5
+        #arrow indicates whether the 4-class model improved or worsened for this class
         arrow = "↑" if diff > 0.005 else ("↓" if diff < -0.005 else "~")
         print(f"    {cls:<30} {f4:>12.4f} {f5:>12.4f}  {arrow} {abs(diff):.4f}")
 
     print(f"  {'glass (5-class only)':<32} {'—':>12} "
           f"{report_5['glass']['f1-score']:>12.4f}")
 
+
 def compare():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[Compare] Using device: {device}")
 
+    #verify both model checkpoints exist before proceeding
     for path, name in [(FIVE_CLASS_MODEL_PATH, "5-class"), (FOUR_CLASS_MODEL_PATH, "4-class")]:
         if not os.path.exists(path):
             print(f"[Compare] ERROR: {name} model not found at {path}")
@@ -111,10 +123,10 @@ def compare():
     report_4 = classification_report(y_true_4, y_pred_4,
                                      target_names=class_names_4, output_dict=True)
 
+    #glass is excluded from shared classes since it only exists in the 5-class model
     shared_classes = [c for c in class_names_5 if c != "glass"]
 
     print_comparison_table(acc_4, acc_5, report_4, report_5, shared_classes)
-
     save_comparison_chart(report_4, report_5, shared_classes, COMPARISON_SAVE_DIR)
 
     print("[Compare]  Comparison complete.")

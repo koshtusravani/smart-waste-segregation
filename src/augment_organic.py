@@ -1,3 +1,8 @@
+# augment_organic.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: offline augmentation to balance underrepresented classes before training
+
 import os
 import sys
 import random
@@ -9,15 +14,17 @@ from config import DATA_TRAIN_DIR, RANDOM_SEED
 
 random.seed(RANDOM_SEED)
 
+#target image count per class after augmentation
 AUGMENT_TARGETS = {
-    "organic": 900,   
-    "metal":   500,   
-    "glass":   900,   
-    "plastic": 500,   
+    "organic": 900,
+    "metal":   500,
+    "glass":   900,
+    "plastic": 500,
 }
 
 
 def augment_image(img):
+    #randomly selects 2-4 augmentation operations and applies them to a single image
     ops = random.sample([
         lambda i: i.transpose(Image.FLIP_LEFT_RIGHT),
         lambda i: i.transpose(Image.FLIP_TOP_BOTTOM),
@@ -48,6 +55,7 @@ def augment_class(cls_name, target_count):
                 if f.lower().endswith((".jpg", ".jpeg", ".png"))]
     current_count = len(existing)
 
+    #skip if the class already meets the target count
     if current_count >= target_count:
         print(f"[Augment] {cls_name}: already has {current_count} images, skipping.")
         return
@@ -55,6 +63,7 @@ def augment_class(cls_name, target_count):
     needed = target_count - current_count
     print(f"[Augment] {cls_name}: {current_count} → {target_count} (generating {needed} images)...")
 
+    #generate augmented images and save them to the same class directory
     generated = 0
     while generated < needed:
         src_file = random.choice(existing)

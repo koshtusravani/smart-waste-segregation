@@ -1,3 +1,8 @@
+# dataset.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: defines data loading, augmentation transforms, and dataloaders for training and evaluation
+
 import os
 import numpy as np
 from torch.utils.data import DataLoader
@@ -6,6 +11,7 @@ from config import DATA_TRAIN_DIR, DATA_VAL_DIR, DATA_TEST_DIR, IMG_SIZE, MEAN, 
 
 
 def get_train_transforms():
+    #applies strong augmentation during training to improve generalization
     return transforms.Compose([
         transforms.Resize((256, 256)),
         transforms.RandomCrop(IMG_SIZE),
@@ -23,6 +29,7 @@ def get_train_transforms():
 
 
 def get_val_test_transforms():
+    #no augmentation for validation and test — only resize and normalize
     return transforms.Compose([
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
@@ -55,6 +62,7 @@ def get_dataloaders(batch_size=BATCH_SIZE, num_workers=0):
 
 
 def get_class_counts(data_dir):
+    #prints the number of images per class in the given directory
     print(f"\n[Class Counts] {data_dir}")
     for cls in sorted(os.listdir(data_dir)):
         cls_path = os.path.join(data_dir, cls)

@@ -1,3 +1,8 @@
+# model.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: defines the mobilenetv2 architecture with a custom classification head
+
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -5,6 +10,7 @@ from config import NUM_CLASSES
 
 
 def build_model(num_classes=NUM_CLASSES, freeze_backbone=True):
+    #loads pretrained mobilenetv2 and replaces the classifier head
     model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
     if freeze_backbone:
         for param in model.features.parameters():
@@ -21,6 +27,7 @@ def build_model(num_classes=NUM_CLASSES, freeze_backbone=True):
 
 
 def load_model(model_path, num_classes=NUM_CLASSES, device="cpu"):
+    #loads a saved model checkpoint from disk
     model = build_model(num_classes=num_classes, freeze_backbone=False)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
@@ -30,6 +37,7 @@ def load_model(model_path, num_classes=NUM_CLASSES, device="cpu"):
 
 
 def count_parameters(model):
+    #prints total and trainable parameter counts
     total     = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"[Model] Total params:     {total:,}")

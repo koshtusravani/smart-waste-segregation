@@ -1,3 +1,8 @@
+# train.py
+# Hema Sravani Koshtu
+# April 20, 2026
+# purpose: trains the 5-class waste classification model using a two-phase strategy
+
 import argparse
 import os
 import sys
@@ -13,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import BEST_MODEL_PATH, MODEL_DIR, PLOTS_DIR, WEIGHT_DECAY
 from dataset import get_dataloaders
 from model import build_model, count_parameters, load_model
+
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
@@ -47,6 +53,7 @@ def validate(model, loader, criterion, device):
 
 
 def save_curves(history, save_dir, start_epoch=1):
+    #saves loss and accuracy plots to disk with correct x-axis epoch offset
     os.makedirs(save_dir, exist_ok=True)
     n = len(history["train_loss"])
     epochs = range(start_epoch, start_epoch + n)
@@ -83,6 +90,7 @@ def _print_header():
 
 def _run_epoch(epoch, model, train_loader, val_loader, criterion, optimizer,
                scheduler, history, device, best_val_acc):
+    #runs one train and validation epoch, saves checkpoint if validation accuracy improves
     t0 = time.time()
     tl, ta = train_one_epoch(model, train_loader, criterion, optimizer, device)
     vl, va = validate(model, val_loader, criterion, device)
@@ -103,7 +111,9 @@ def _run_epoch(epoch, model, train_loader, val_loader, criterion, optimizer,
 
     return best_val_acc
 
+
 def train_from_scratch(train_loader, val_loader, class_names, device):
+    #phase 1: trains head only with backbone frozen, phase 2: full fine-tune
     model = build_model(num_classes=len(class_names), freeze_backbone=True)
     model.to(device)
     count_parameters(model)
@@ -147,6 +157,7 @@ def train_from_scratch(train_loader, val_loader, class_names, device):
 
 
 def continue_training(train_loader, val_loader, class_names, device):
+    #resumes training from the saved checkpoint using cosine annealing lr
     print(f"[Train] Loading checkpoint: {BEST_MODEL_PATH}")
     model = load_model(BEST_MODEL_PATH, num_classes=len(class_names), device=device)
     count_parameters(model)
@@ -156,6 +167,7 @@ def continue_training(train_loader, val_loader, class_names, device):
 
     criterion = nn.CrossEntropyLoss()
 
+    #measure baseline accuracy from checkpoint before continuing
     print("[Train] Measuring checkpoint baseline...")
     _, best_val_acc = validate(model, val_loader, criterion, device)
     print(f"[Train] Checkpoint baseline val acc: {best_val_acc * 100:.2f}%\n")
@@ -175,8 +187,11 @@ def continue_training(train_loader, val_loader, class_names, device):
             epoch, model, train_loader, val_loader,
             criterion, optimizer, scheduler, history, device, best_val_acc,
         )
+
+    #start_epoch=46 so x-axis continues from where initial training left off
     save_curves(history, PLOTS_DIR, start_epoch=46)
     return best_val_acc
+
 
 def main():
     parser = argparse.ArgumentParser(description="Train or continue training the model.")
